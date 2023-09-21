@@ -18,8 +18,9 @@ class RegistrationForm(FlaskForm):
 
 
 class UploadForm(FlaskForm):
-    file = FileField('Music File', validators=[
+    files = FileField('Music Files', validators=[
         FileRequired(),
         FileAllowed(['mp3', 'wav', 'flac'], 'Music files only.')
     ])
     submit = SubmitField('Upload')
+

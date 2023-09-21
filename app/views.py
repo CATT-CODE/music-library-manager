@@ -1,6 +1,6 @@
 from flask import render_template, request, redirect, url_for, flash
 from . import app, db, login_manager
-from .models import User, Track
+from .models import User, Track, Artist
 from flask_login import login_user, logout_user, login_required, current_user
 from .forms import LoginForm, RegistrationForm, UploadForm
 import eyed3
@@ -69,27 +69,32 @@ def allowed_file(filename):
 def upload():
     form = UploadForm()
     if form.validate_on_submit():
-        file = form.file.data
+        files = request.files.getlist('files')
+        
+        for file in files:
+            _, tmp_filename = tempfile.mkstemp()
+            file.save(tmp_filename)
 
-        _, tmp_filename = tempfile.mkstemp()
-        file.save(tmp_filename)
+            metadata = eyed3.load(tmp_filename)
 
-        metadata = eyed3.load(tmp_filename)
+            title = metadata.tag.title if metadata.tag.title else 'Unknown Title'
+            artist_name = metadata.tag.artist if metadata.tag.artist else 'Unknown Artist'
+            album = metadata.tag.album if metadata.tag.album else 'Unknown Album'
+            genre = metadata.tag.genre if metadata.tag.genre else 'Unknown Genre'
 
-        title = metadata.tag.title if metadata.tag.title else 'Unknown Title'
-        artist = metadata.tag.artist if metadata.tag.artist else 'Unknown Artist'
-        album = metadata.tag.album if metadata.tag.album else 'Unknown Album'
-        genre = metadata.tag.genre if metadata.tag.genre else 'Unknown Genre'
+            artist = Artist.query.filter(Artist.name.ilike(artist_name)).first()
+            if not artist:
+                artist = Artist(name=artist_name)
+                db.session.add(artist)
+                db.session.flush()
 
-        os.remove(tmp_filename)
+            os.remove(tmp_filename)
 
-        track = Track(title=title, artist=artist, album=album, genre=genre, user_id=current_user.id)
-        db.session.add(track)
+            track = Track(title=title, artist_id=artist.id, album=album, genre=genre, user_id=current_user.id)
+            db.session.add(track)
         db.session.commit()
 
-        flash('Track uploaded successfully!', 'success')
+        flash(f'{len(files)} tracks uploaded successfully!', 'success')
         return redirect(url_for('index'))
 
-    return render_template('upload.html', form=form)
-
-
+    return render_template('upload.html', title='Upload' form=form)

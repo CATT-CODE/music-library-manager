@@ -6,6 +6,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(120))
+    tracks = db.relationship('Track', backref='user', lazy=True)
 
     @property
     def password(self):
@@ -21,8 +22,14 @@ class User(UserMixin, db.Model):
 class Track(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100))
-    artist = db.Column(db.String(100))
+    artist_id = db.Column(db.Integer, db.ForeignKey('artist.id'))
     album = db.Column(db.String(100))
     genre = db.Column(db.String(50))
     filepath = db.Column(db.String(500))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+class Artist(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), index=True, unique=True)
+    tracks = db.relationship('Track', backref='artist', lazy=True)
+
