@@ -6,7 +6,7 @@
     Here you can manage your music library, view tracks, and edit metadata.
 </p>
 
-<h2>Your Tracks - ({{tracks|length}})</h2>
+<h2>Your Tracks - ({{ tracks|length }})</h2>
 
 <form action="{{ url_for('bulk_action') }}" method="post">
     <ul>
@@ -20,8 +20,8 @@
         {% endfor %}
     </ul>
     <p></p>
-    <input type="submit" name="action" value="Edit Selected" class="btn btn-secondary">
-    <input type="submit" name="action" value="Delete Selected" class="btn btn-danger">
+    <input type="submit" name="action" value="Bulk Edit" class="btn btn-secondary">
+    <input type="submit" name="action" value="Bulk Delete" class="btn btn-danger">
 </form>
 
 {% endblock %}

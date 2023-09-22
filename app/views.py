@@ -153,14 +153,12 @@ def delete_track(track_id):
     return redirect(url_for('index'))
 
 
-@app.route('/bulk_action', methods=['POST'])
+@app.route('/bulk_action', methods=['GET', 'POST'])
 @login_required
 def bulk_action():
-    
 
     selected_tracks = request.form.getlist('selected_tracks')
     action = request.form.get('action')
-    print(action)
 
     tracks = Track.query.filter(Track.id.in_(selected_tracks)).all()
 
@@ -175,7 +173,21 @@ def bulk_action():
         return redirect(url_for('index'))
 
     elif action == "Bulk Edit":
-        return render_template('bulk_edit.html', tracks=tracks)
-
+        track_ids = request.form.getlist('selected_tracks')
+        tracks = Track.query.filter(Track.id.in_(track_ids)).all()
+        return render_template('bulk_edit.html', title='Edit Tracks', tracks=tracks)
     else:
         return redirect(url_for('index'))
+
+
+@app.route('/process_bulk_edit', methods=['POST'])
+@login_required
+def process_bulk_edit():
+    
+    return redirect(url_for('index'))
+
+@app.route('/process_global_bulk_edit', methods=['POST'])
+@login_required
+def process_global_bulk_edit():
+    
+    return redirect(url_for('index'))

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <h2>Bulk Edit Tracks</h2>
+    <div class="card">
+        <div class="card-header" role='button' id="globalEditHeader" data-toggle="collapse" data-target="#globalEditBody" aria-expanded="true" aria-controls="globalEditBody">
+            <h5 class="mb-0">Edit All Selected Tracks</h5>
+        </div>
+    
+        <div id="globalEditBody" class="collapse" aria-labelledby="globalEditHeader">
+            <div class="card-body">
+                <form action="{{ url_for('process_global_bulk_edit') }}" method="post">
+                    <div class="form-group">
+                        <label for="global_artist">Artist Name</label>
+                        <input type="text" class="form-control" name="global_artist" placeholder="Enter artist name to apply to all selected tracks">
+                    </div>
+                    <div class="form-group">
+                        <label for="global_album">Album Name</label>
+                        <input type="text" class="form-control" name="global_album" placeholder="Enter album name to apply to all selected tracks">
+                    </div>
+                    <div class="form-group">
+                        <label for="global_genre">Genre</label>
+                        <input type="text" class="form-control" name="global_genre" placeholder="Enter genre to apply to all selected tracks">
+                    </div>
+    
+                    {% for track_id in track_ids %}
+                    <input type="hidden" name="track_ids" value="{{ track_id }}">
+                    {% endfor %}
+    
+                    <input type="submit" value="Apply to All Tracks" class="btn btn-warning">
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <hr>
+    <form method="POST" action="{{ url_for('process_bulk_edit') }}">
+        {% for track in tracks %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">{{ track.title }}</h5>
+                <p class="">Artist: {{ track.artist.name }}</p>
+                <p class="">Album: {{ track.album }}</p>
+                <p class="">Genre: {{ track.genre }}</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="title_{{ track.id }}">Title</label>
+                        <input type="text" name="title_{{ track.id }}" value="{{ track.title }}" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="artist_{{ track.id }}">Artist</label>
+                        <input type="text" name="artist_{{ track.id }}" value="{{ track.artist.name }}" class="form-control">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="album_{{ track.id }}">Album</label>
+                        <input type="text" name="album_{{ track.id }}" value="{{ track.album }}" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="genre_{{ track.id }}">Genre</label>
+                        <input type="text" name="genre_{{ track.id }}" value="{{ track.genre }}" class="form-control">
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
+    </form>
+</div>
+{% endblock %}
