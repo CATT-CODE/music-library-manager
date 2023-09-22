@@ -138,3 +138,16 @@ def edit_metadata(track_id):
         form.genre.data = track.genre
 
     return render_template('edit_metadata.html', title='Edit Track', form=form)
+
+@app.route('/delete_track/<int:track_id>', methods=['POST'])
+@login_required
+def delete_track(track_id):
+    track = Track.query.get_or_404(track_id)
+    if track.user_id != current_user.id:
+        flash('Must login to delete tracks.', 'danger')
+        return redirect(url_for('index'))
+
+    db.session.delete(track)
+    db.session.commit()
+    flash('Track deleted successfully!', 'success')
+    return redirect(url_for('index'))
