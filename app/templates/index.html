@@ -10,7 +10,7 @@
     <h2>Your Tracks</h2>
     <ul>
     {% for track in tracks %}
-        <li>{{ track.title }} - {{ track.artist }} - {{ track.genre }}</li>
+        <li>{{ track.title }} - {{ track.artist.name }} - {{ track.genre }}</li>
     {% endfor %}
     </ul>
 {% endblock %}

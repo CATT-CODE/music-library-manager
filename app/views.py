@@ -2,7 +2,7 @@ from flask import render_template, request, redirect, url_for, flash
 from . import app, db, login_manager
 from .models import User, Track, Artist
 from flask_login import login_user, logout_user, login_required, current_user
-from .forms import LoginForm, RegistrationForm, UploadForm
+from .forms import LoginForm, RegistrationForm, UploadForm, EditMetadataForm
 import eyed3
 import os
 import tempfile
@@ -88,13 +88,35 @@ def upload():
                 db.session.add(artist)
                 db.session.flush()
 
+            if title != 'Unknown Title':
+                existing_track = Track.query.filter_by(title=title, artist_id=artist.id).first()
+                if existing_track:
+                    os.remove(tmp_filename) 
+                    continue
+
             os.remove(tmp_filename)
 
             track = Track(title=title, artist_id=artist.id, album=album, genre=genre, user_id=current_user.id)
             db.session.add(track)
+
         db.session.commit()
 
-        flash(f'{len(files)} tracks uploaded successfully!', 'success')
+        flash(f'{len(files)} track(s) uploaded successfully!', 'success')
         return redirect(url_for('index'))
 
-    return render_template('upload.html', title='Upload' form=form)
+    return render_template('upload.html', title='Upload', form=form)
+
+
+@app.route('/edit_metadata/<int:track_id>', methods=['GET', 'POST'])
+@login_required
+def edit_metadata(track_id):
+    track = Track.query.get_or_404(track_id)
+    print(track)
+    form = EditMetadataForm()
+    
+    if request.method == 'GET':
+        form.title.data = track.title
+        form.artist_name.data = track.artist.name
+        form.album.data = track.album
+        form.genre.data = track.genre
+    return render_template('edit_metadata.html', form=form)

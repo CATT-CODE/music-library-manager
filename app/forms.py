@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField
-from wtforms.validators import DataRequired, Email, EqualTo
+from wtforms.validators import DataRequired, Email, EqualTo, Optional
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 
 class LoginForm(FlaskForm):
@@ -23,4 +23,11 @@ class UploadForm(FlaskForm):
         FileAllowed(['mp3', 'wav', 'flac'], 'Music files only.')
     ])
     submit = SubmitField('Upload')
+
+class EditMetadataForm(FlaskForm):
+    title = StringField('Title', validators=[Optional()])
+    artist_name = StringField('Artist', validators=[Optional()])
+    album = StringField('Album', validators=[Optional()])
+    genre = StringField('Genre', validators=[Optional()])
+    submit = SubmitField('Update Metadata')
 
