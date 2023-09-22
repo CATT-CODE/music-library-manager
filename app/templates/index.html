@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% block title %}Home{% endblock %}
 
 {% block content %}
     <h1>Welcome to the Music Library Manager</h1>
@@ -11,6 +10,7 @@
     <ul>
     {% for track in tracks %}
         <li>{{ track.title }} - {{ track.artist.name }} - {{ track.genre }}</li>
+        <a href="{{ url_for('edit_metadata', track_id=track.id) }}" class="btn btn-secondary">Edit Track</a>
     {% endfor %}
     </ul>
 {% endblock %}

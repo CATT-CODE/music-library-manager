@@ -11,8 +11,8 @@ import tempfile
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-@app.route('/')
 @app.route('/index')
+@app.route('/')
 def index():
     if current_user.is_authenticated:
         tracks = Track.query.filter_by(user_id=current_user.id).all()
@@ -111,12 +111,30 @@ def upload():
 @login_required
 def edit_metadata(track_id):
     track = Track.query.get_or_404(track_id)
-    print(track)
+
     form = EditMetadataForm()
+
+    if form.validate_on_submit():
+        track.title = form.title.data or track.title
+        artist_name = form.artist_name.data or track.artist.name
+        artist = Artist.query.filter(Artist.name.ilike(artist_name)).first()
+        if not artist:
+            artist = Artist(name=artist_name)
+            db.session.add(artist)
+            db.session.flush()
+
+        track.artist_id = artist.id
+        track.album = form.album.data or track.album
+        track.genre = form.genre.data or track.genre
+
+        db.session.commit()
+        flash('Metadata updated successfully', 'success')
+        return redirect(url_for('index'))
     
     if request.method == 'GET':
         form.title.data = track.title
         form.artist_name.data = track.artist.name
         form.album.data = track.album
         form.genre.data = track.genre
-    return render_template('edit_metadata.html', form=form)
+
+    return render_template('edit_metadata.html', title='Edit Track', form=form)
