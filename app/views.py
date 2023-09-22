@@ -151,3 +151,31 @@ def delete_track(track_id):
     db.session.commit()
     flash('Track deleted successfully!', 'success')
     return redirect(url_for('index'))
+
+
+@app.route('/bulk_action', methods=['POST'])
+@login_required
+def bulk_action():
+    
+
+    selected_tracks = request.form.getlist('selected_tracks')
+    action = request.form.get('action')
+    print(action)
+
+    tracks = Track.query.filter(Track.id.in_(selected_tracks)).all()
+
+    if action == "Bulk Delete":
+        for track in tracks:
+            if track.user_id != current_user.id:
+                flash('You do not have permission to delete tracks.', 'danger')
+                return redirect(url_for('index'))
+            db.session.delete(track)
+        db.session.commit()
+        flash(f'{len(tracks)} tracks deleted successfully!', 'success')
+        return redirect(url_for('index'))
+
+    elif action == "Bulk Edit":
+        return render_template('bulk_edit.html', tracks=tracks)
+
+    else:
+        return redirect(url_for('index'))
