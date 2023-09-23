@@ -27,7 +27,7 @@ def login():
     
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
+        user = User.query.filter(User.username.ilike(form.username.data)).first()
         if user is None or not user.check_password(form.password.data):
             flash('Invalid username or password')
             return redirect(url_for('login'))
@@ -50,12 +50,18 @@ def register():
     
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data)
-        user.password = form.password.data
-        db.session.add(user)
-        db.session.commit()
-        flash('You are now registered!')
-        return redirect(url_for('login'))
+        user = User.query.filter(User.username.ilike(form.username.data)).first()
+        if not user:
+            user = User(username=form.username.data, email=form.email.data)
+            user.password = form.password.data
+            db.session.add(user)
+            db.session.commit()
+            flash('You are now registered!')
+            return redirect(url_for('login'))
+        else:
+            print('login hello')
+            flash('Username is not unique', 'error')
+            return redirect(url_for('login'))
     
     return render_template('register.html', title='Register', form=form)
 
@@ -201,7 +207,7 @@ def process_bulk_edit():
             track.genre = request.form[genre_field]
         if artist_field in request.form:
             artist_name = request.form[artist_field]
-            artist = Artist.query.filter_by(name=artist_name).first()
+            artist = Artist.query.filter(Artist.name.ilike(artist_name)).first()
             if not artist:
                 artist = Artist(name=artist_name)
                 db.session.add(artist)
@@ -209,12 +215,35 @@ def process_bulk_edit():
             track.artist_id = artist.id
 
     db.session.commit()
-    flash(f'{len(tracks)} Tracks updated successfully!', 'success')
+    flash(f'{len(tracks)} tracks updated successfully!', 'success')
     return redirect(url_for('index'))
 
 
 @app.route('/process_global_bulk_edit', methods=['POST'])
 @login_required
 def process_global_bulk_edit():
-    
+    track_ids = request.form.getlist('track_ids')
+
+    tracks = Track.query.filter(Track.id.in_(track_ids), Track.user_id == current_user.id).all()
+
+    global_album = request.form.get('global_album')
+    global_genre = request.form.get('global_genre')
+    global_artist = request.form.get('global_artist')
+
+    for track in tracks:
+        if global_album:
+            track.album = global_album
+        if global_genre:
+            track.genre = global_genre
+        if global_artist:
+            artist_name = global_artist
+            artist = Artist.query.filter(Artist.name.ilike(artist_name)).first()
+            if not artist:
+                artist = Artist(name=artist_name)
+                db.session.add(artist)
+                db.session.flush()
+            track.artist_id = artist.id
+
+    db.session.commit()
+    flash(f'{len(tracks)} tracks updated successfully!', 'success')
     return redirect(url_for('index'))

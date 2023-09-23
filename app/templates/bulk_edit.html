@@ -25,8 +25,8 @@
                         <input type="text" class="form-control" name="global_genre" placeholder="Enter genre to apply to all selected tracks">
                     </div>
     
-                    {% for track_id in track_ids %}
-                    <input type="hidden" name="track_ids" value="{{ track_id }}">
+                    {% for track in tracks %}
+                    <input type="hidden" name="track_ids" value="{{ track.id }}">
                     {% endfor %}
     
                     <input type="submit" value="Apply to All Tracks" class="btn btn-warning">
