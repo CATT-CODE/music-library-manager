@@ -40,6 +40,7 @@
         {% for track in tracks %}
         <div class="card mb-4">
             <div class="card-body">
+                <input type="hidden" name="track_ids" value="{{ track.id }}">
                 <h5 class="card-title">{{ track.title }}</h5>
                 <p class="">Artist: {{ track.artist.name }}</p>
                 <p class="">Album: {{ track.album }}</p>

@@ -139,18 +139,18 @@ def edit_metadata(track_id):
 
     return render_template('edit_metadata.html', title='Edit Track', form=form)
 
-@app.route('/delete_track/<int:track_id>', methods=['POST'])
-@login_required
-def delete_track(track_id):
-    track = Track.query.get_or_404(track_id)
-    if track.user_id != current_user.id:
-        flash('Must login to delete tracks.', 'danger')
-        return redirect(url_for('index'))
+# @app.route('/delete_track/<int:track_id>', methods=['POST'])
+# @login_required
+# def delete_track(track_id):
+#     track = Track.query.get_or_404(track_id)
+#     if track.user_id != current_user.id:
+#         flash('Must login to delete tracks.', 'danger')
+#         return redirect(url_for('index'))
 
-    db.session.delete(track)
-    db.session.commit()
-    flash('Track deleted successfully!', 'success')
-    return redirect(url_for('index'))
+#     db.session.delete(track)
+#     db.session.commit()
+#     flash('Track deleted successfully!', 'success')
+#     return redirect(url_for('index'))
 
 
 @app.route('/bulk_action', methods=['GET', 'POST'])
@@ -183,8 +183,35 @@ def bulk_action():
 @app.route('/process_bulk_edit', methods=['POST'])
 @login_required
 def process_bulk_edit():
-    
+    track_ids = request.form.getlist('track_ids')
+
+    tracks = Track.query.filter(Track.id.in_(track_ids), Track.user_id == current_user.id).all()
+
+    for track in tracks:
+        title_field = f"title_{track.id}"
+        artist_field = f"artist_{track.id}"
+        album_field = f"album_{track.id}"
+        genre_field = f"genre_{track.id}"
+
+        if title_field in request.form:
+            track.title = request.form[title_field]
+        if album_field in request.form:
+            track.album = request.form[album_field]
+        if genre_field in request.form:
+            track.genre = request.form[genre_field]
+        if artist_field in request.form:
+            artist_name = request.form[artist_field]
+            artist = Artist.query.filter_by(name=artist_name).first()
+            if not artist:
+                artist = Artist(name=artist_name)
+                db.session.add(artist)
+                db.session.flush()
+            track.artist_id = artist.id
+
+    db.session.commit()
+    flash(f'{len(tracks)} Tracks updated successfully!', 'success')
     return redirect(url_for('index'))
+
 
 @app.route('/process_global_bulk_edit', methods=['POST'])
 @login_required
