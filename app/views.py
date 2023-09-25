@@ -112,53 +112,6 @@ def upload():
 
     return render_template('upload.html', title='Upload', form=form)
 
-
-@app.route('/edit_metadata/<int:track_id>', methods=['GET', 'POST'])
-@login_required
-def edit_metadata(track_id):
-    track = Track.query.get_or_404(track_id)
-
-    form = EditMetadataForm()
-
-    if form.validate_on_submit():
-        track.title = form.title.data or track.title
-        artist_name = form.artist_name.data or track.artist.name
-        artist = Artist.query.filter(Artist.name.ilike(artist_name)).first()
-        if not artist:
-            artist = Artist(name=artist_name)
-            db.session.add(artist)
-            db.session.flush()
-
-        track.artist_id = artist.id
-        track.album = form.album.data or track.album
-        track.genre = form.genre.data or track.genre
-
-        db.session.commit()
-        flash('Metadata updated successfully', 'success')
-        return redirect(url_for('index'))
-    
-    if request.method == 'GET':
-        form.title.data = track.title
-        form.artist_name.data = track.artist.name
-        form.album.data = track.album
-        form.genre.data = track.genre
-
-    return render_template('edit_metadata.html', title='Edit Track', form=form)
-
-# @app.route('/delete_track/<int:track_id>', methods=['POST'])
-# @login_required
-# def delete_track(track_id):
-#     track = Track.query.get_or_404(track_id)
-#     if track.user_id != current_user.id:
-#         flash('Must login to delete tracks.', 'danger')
-#         return redirect(url_for('index'))
-
-#     db.session.delete(track)
-#     db.session.commit()
-#     flash('Track deleted successfully!', 'success')
-#     return redirect(url_for('index'))
-
-
 @app.route('/bulk_action', methods=['GET', 'POST'])
 @login_required
 def bulk_action():
