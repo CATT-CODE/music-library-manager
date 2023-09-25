@@ -168,7 +168,7 @@ def bulk_action():
 
     tracks = Track.query.filter(Track.id.in_(selected_tracks)).all()
 
-    if action == "Bulk Delete":
+    if action == "Delete":
         for track in tracks:
             if track.user_id != current_user.id:
                 flash('You do not have permission to delete tracks.', 'danger')
@@ -178,7 +178,7 @@ def bulk_action():
         flash(f'{len(tracks)} tracks deleted successfully!', 'success')
         return redirect(url_for('index'))
 
-    elif action == "Bulk Edit":
+    elif action == "Edit":
         track_ids = request.form.getlist('selected_tracks')
         tracks = Track.query.filter(Track.id.in_(track_ids)).all()
         return render_template('bulk_edit.html', title='Edit Tracks', tracks=tracks)

@@ -2,35 +2,51 @@
 
 {% block content %}
 <div class="container mt-5">
-
     <h1>Welcome to the Music Library Manager</h1>
-    <p>
-        Here you can manage your music library, view tracks, and edit metadata.
-    </p>
+    <p>Here you can manage your music library, view tracks, and edit metadata.</p>
+
     {% if current_user.username %}
     <h2>Your Tracks - ({{ tracks|length }})</h2>
-    
+
     <form action="{{ url_for('bulk_action') }}" method="post">
-        <ul>
-            {% for track in tracks %}
-            <li>
-                <input type="checkbox" name="selected_tracks" value="{{ track.id }}">
-                <span>{{ track.title }} - {{ track.artist.name }} - {{ track.genre }}</span>
-                <a href="{{ url_for('edit_metadata', track_id=track.id) }}" class="btn btn-secondary">Edit Track</a>
-    
-            </li>
-            {% endfor %}
-        </ul>
-        <p></p>
-        <p id="selectedCount">0 tracks selected</p>
-        <input type="submit" name="action" value="Bulk Edit" class="btn btn-secondary">
-        <input type="submit" name="action" value="Bulk Delete" class="btn btn-danger">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>Title</th>
+                    <th>Artist</th>
+                    <th>Album</th>
+                    <th>Genre</th>
+                    <!-- <th>Actions</th> -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for track in tracks %}
+                <tr>
+                    <td><input type="checkbox" name="selected_tracks" value="{{ track.id }}"></td>
+                    <td>{{ track.title }}</td>
+                    <td>{{ track.artist.name }}</td>
+                    <td>{{ track.album }}</td>
+                    <td>{{ track.genre }}</td>
+                    <!-- <td><a href="{{ url_for('edit_metadata', track_id=track.id) }}" class="btn btn-secondary">Edit</a></td> -->
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="mb-3">
+            <p id="selectedCount">0 tracks selected</p>
+            <input type="submit" name="action" value="Edit" class="btn btn-secondary">
+            <input type="submit" name="action" value="Delete" class="btn btn-danger">
+            <button type="button" id="clearButton" class="btn btn-warning">Clear</button>
+        </div>
     </form>
+
     {% else %}
-    <h3>Please login to mangage your library.</h3>
+    <h3>Please login to manage your library.</h3>
     {% endif %}
 </div>
 {% endblock %}
+
 {% block scripts %}
 <script>
     $(document).ready(function () {
@@ -38,8 +54,14 @@
             let count = $('input[name="selected_tracks"]:checked').length;
             $('#selectedCount').text(count + ' tracks selected');
         }
+        
+        $('#clearButton').on('click', function() {
+            $('input[name="selected_tracks"]').prop('checked', false);
+            updateCount();
+        });
 
         $('input[name="selected_tracks"]').on('change', updateCount);
+        updateCount();
     });
 </script>
 {% endblock %}
