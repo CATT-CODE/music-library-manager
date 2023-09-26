@@ -9,7 +9,6 @@ import eyed3
 import os
 import tempfile
 
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -138,8 +137,7 @@ def bulk_action():
         for track in tracks:
             if track.user_id != current_user.id:
                 flash('You do not have permission to delete tracks.', 'danger')
-                return redirect(url_for('index'))
-            
+                return redirect(url_for('index'))            
             try:
                 s3_client.delete_object(Bucket=app.config['AWS_BUCKET_NAME'], Key=track.s3_url)
             except (BotoCoreError, NoCredentialsError) as e:
@@ -150,7 +148,7 @@ def bulk_action():
         db.session.commit()
         flash(f'{len(tracks)} tracks deleted successfully!', 'success')
         return redirect(url_for('index'))
-    
+
     elif action == "Edit":
         track_ids = request.form.getlist('selected_tracks')
         tracks = Track.query.filter(Track.id.in_(track_ids)).all()
