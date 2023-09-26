@@ -150,7 +150,7 @@ def bulk_action():
         db.session.commit()
         flash(f'{len(tracks)} tracks deleted successfully!', 'success')
         return redirect(url_for('index'))
-    
+
     elif action == "Edit":
         track_ids = request.form.getlist('selected_tracks')
         tracks = Track.query.filter(Track.id.in_(track_ids)).all()

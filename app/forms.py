@@ -30,4 +30,3 @@ class EditMetadataForm(FlaskForm):
     album = StringField('Album', validators=[Optional()])
     genre = StringField('Genre', validators=[Optional()])
     submit = SubmitField('Update Metadata')
-
