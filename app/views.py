@@ -4,7 +4,7 @@ from .models import User, Track, Artist
 from flask_login import login_user, logout_user, login_required, current_user
 from .forms import LoginForm, RegistrationForm, UploadForm
 from werkzeug.utils import secure_filename
-from botocore.exceptions import BotoCoreError, PartialCredentialsError
+from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
 import eyed3
 import os
 import tempfile
@@ -113,7 +113,7 @@ def upload():
                 track = Track(title=title, artist_id=artist.id, album=album, genre=genre, user_id=current_user.id, s3_url=s3_file_key)
                 db.session.add(track)
                 
-            except (BotoCoreError, PartialCredentialsError) as e:
+            except (BotoCoreError, ClientError) as e:
                 flash(f'Error uploading {file.filename}: {str(e)}', 'danger')
                 continue
             except Exception as e:
@@ -129,7 +129,6 @@ def upload():
 @app.route('/bulk_action', methods=['GET', 'POST'])
 @login_required
 def bulk_action():
-
     selected_tracks = request.form.getlist('selected_tracks')
     action = request.form.get('action')
 
@@ -140,11 +139,18 @@ def bulk_action():
             if track.user_id != current_user.id:
                 flash('You do not have permission to delete tracks.', 'danger')
                 return redirect(url_for('index'))
+            
+            try:
+                s3_client.delete_object(Bucket=app.config['AWS_BUCKET_NAME'], Key=track.s3_url)
+            except (BotoCoreError, NoCredentialsError) as e:
+                flash(f'Error deleting {track.s3_url} from S3: {str(e)}', 'danger')
+                continue
+
             db.session.delete(track)
         db.session.commit()
         flash(f'{len(tracks)} tracks deleted successfully!', 'success')
         return redirect(url_for('index'))
-
+    
     elif action == "Edit":
         track_ids = request.form.getlist('selected_tracks')
         tracks = Track.query.filter(Track.id.in_(track_ids)).all()
