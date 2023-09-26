@@ -1,11 +1,14 @@
 from flask import render_template, request, redirect, url_for, flash
-from . import app, db, login_manager
+from . import app, db, login_manager, s3_client
 from .models import User, Track, Artist
 from flask_login import login_user, logout_user, login_required, current_user
-from .forms import LoginForm, RegistrationForm, UploadForm, EditMetadataForm
+from .forms import LoginForm, RegistrationForm, UploadForm
+from werkzeug.utils import secure_filename
+from botocore.exceptions import BotoCoreError, PartialCredentialsError
 import eyed3
 import os
 import tempfile
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -75,38 +78,49 @@ def allowed_file(filename):
 def upload():
     form = UploadForm()
     if form.validate_on_submit():
+        bucket_name = app.config['AWS_BUCKET_NAME']
         files = request.files.getlist('files')
         
         for file in files:
-            _, tmp_filename = tempfile.mkstemp()
-            file.save(tmp_filename)
+            try:
+                _, tmp_filename = tempfile.mkstemp()
+                file.save(tmp_filename)
 
-            metadata = eyed3.load(tmp_filename)
+                metadata = eyed3.load(tmp_filename)
+                title = metadata.tag.title if metadata.tag.title else 'Unknown Title'
+                artist_name = metadata.tag.artist if metadata.tag.artist else 'Unknown Artist'
+                album = metadata.tag.album if metadata.tag.album else 'Unknown Album'
+                genre = metadata.tag.genre if metadata.tag.genre else 'Unknown Genre'
 
-            title = metadata.tag.title if metadata.tag.title else 'Unknown Title'
-            artist_name = metadata.tag.artist if metadata.tag.artist else 'Unknown Artist'
-            album = metadata.tag.album if metadata.tag.album else 'Unknown Album'
-            genre = metadata.tag.genre if metadata.tag.genre else 'Unknown Genre'
+                file_name = secure_filename(file.filename)
+                s3_file_key = f"{current_user.username}/{file_name}"
 
-            artist = Artist.query.filter(Artist.name.ilike(artist_name)).first()
-            if not artist:
-                artist = Artist(name=artist_name)
-                db.session.add(artist)
-                db.session.flush()
+                s3_client.upload_file(tmp_filename, bucket_name, s3_file_key)
 
-            if title != 'Unknown Title':
-                existing_track = Track.query.filter_by(title=title, artist_id=artist.id).first()
-                if existing_track:
-                    os.remove(tmp_filename) 
-                    continue
+                os.remove(tmp_filename)
+                
+                artist = Artist.query.filter(Artist.name.ilike(artist_name)).first()
+                if not artist:
+                    artist = Artist(name=artist_name)
+                    db.session.add(artist)
+                    db.session.flush()
 
-            os.remove(tmp_filename)
+                if title != 'Unknown Title':
+                    existing_track = Track.query.filter_by(title=title, artist_id=artist.id).first()
+                    if existing_track:
+                        continue
 
-            track = Track(title=title, artist_id=artist.id, album=album, genre=genre, user_id=current_user.id)
-            db.session.add(track)
-
+                track = Track(title=title, artist_id=artist.id, album=album, genre=genre, user_id=current_user.id, s3_url=s3_file_key)
+                db.session.add(track)
+                
+            except (BotoCoreError, PartialCredentialsError) as e:
+                flash(f'Error uploading {file.filename}: {str(e)}', 'danger')
+                continue
+            except Exception as e:
+                flash(f'An error occurred: {str(e)}', 'danger')
+                continue
+        
         db.session.commit()
-
         flash(f'{len(files)} track(s) uploaded successfully!', 'success')
         return redirect(url_for('index'))
 

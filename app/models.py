@@ -25,7 +25,7 @@ class Track(db.Model):
     artist_id = db.Column(db.Integer, db.ForeignKey('artist.id'))
     album = db.Column(db.String(100))
     genre = db.Column(db.String(50))
-    filepath = db.Column(db.String(500))
+    s3_url = db.Column(db.String(500))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
 class Artist(db.Model):
