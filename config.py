@@ -6,7 +6,7 @@ load_dotenv(find_dotenv())
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 SECRET_KEY = os.getenv('SECRET_KEY')
-UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+
 ALLOWED_EXTENSIONS = {'mp3', 'wav', 'flac'}
 
 DATABASE_USER = os.getenv('DATABASE_USER')

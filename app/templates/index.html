@@ -14,7 +14,7 @@
     <p>Here you can manage your music library, view tracks, and edit metadata.</p>
 
     {% if current_user.username %}
-    <h2>Your Tracks - ({{ tracks|length }})</h2>
+    <h2 class="mt-3">Your Tracks - ({{ tracks|length }})</h2>
 
     <form action="{{ url_for('bulk_action') }}" method="post">
         <table class="table table-striped">
