@@ -1,16 +1,110 @@
 {% extends "base.html" %}
-{% block title %}Home{% endblock %}
+
+{% block head %}
+<style>
+    input[type="checkbox"] {
+        pointer-events: none;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
+<div class="container mt-5">
     <h1>Welcome to the Music Library Manager</h1>
-    <p>
-        Here you can manage your music library, view tracks, and edit metadata.
-    </p>
+    <p>Here you can manage your music library, view tracks, and edit metadata.</p>
 
-    <h2>Your Tracks</h2>
-    <ul>
-    {% for track in tracks %}
-        <li>{{ track.title }} - {{ track.artist }} - {{ track.genre }}</li>
-    {% endfor %}
-    </ul>
+    {% if current_user.username %}
+    <h2>Your Tracks - ({{ tracks|length }})</h2>
+
+    <form action="{{ url_for('bulk_action') }}" method="post">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>Title</th>
+                    <th>Artist</th>
+                    <th>Album</th>
+                    <th>Genre</th>
+                    <!-- <th>Actions</th> -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for track in tracks %}
+                <tr>
+                    <td><input type="checkbox" name="selected_tracks" value="{{ track.id }}"></td>
+                    <td>{{ track.title }}</td>
+                    <td>{{ track.artist.name }}</td>
+                    <td>{{ track.album }}</td>
+                    <td>{{ track.genre }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="mb-3">
+            <p id="selectedCount">0 tracks selected</p>
+            <input type="submit" name="action" value="Edit" class="btn btn-secondary">
+            <input type="submit" name="action" value="Delete" class="btn btn-danger">
+            <button type="button" id="clearButton" class="btn btn-warning">Clear</button>
+        </div>
+    </form>
+
+    {% else %}
+    <h3>Please login to manage your library.</h3>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        let isMouseDown = false;
+        let startRowIndex = null;
+        let isSelecting;
+
+        function updateCount() {
+            let count = $('input[name="selected_tracks"]:checked').length;
+            $('#selectedCount').text(count + ' tracks selected');
+        }
+
+        $('#clearButton').on('click', function () {
+            $('input[name="selected_tracks"]').prop('checked', false);
+            updateCount();
+        });
+
+        $('input[name="selected_tracks"]').on('change', updateCount);
+
+        $('tbody tr').mousedown(function (e) {
+            e.preventDefault();
+
+            isMouseDown = true;
+            const rows = $('tbody tr');
+            startRowIndex = rows.index(this);
+
+            isSelecting = !$(this).find('input[type="checkbox"]').prop('checked');
+            $(this).find('input[type="checkbox"]').prop('checked', isSelecting);
+            updateCount();
+        });
+
+        $('tbody tr').mouseover(function () {
+            if (!isMouseDown) return;
+
+            const rows = $('tbody tr');
+            const endRowIndex = rows.index(this);
+            const minIndex = Math.min(startRowIndex, endRowIndex);
+            const maxIndex = Math.max(startRowIndex, endRowIndex);
+
+            for (let i = minIndex; i <= maxIndex; i++) {
+                rows.eq(i).find('input[type="checkbox"]').prop('checked', isSelecting);
+            }
+            updateCount();
+        });
+
+        $(document).mouseup(function () {
+            isMouseDown = false;
+            startRowIndex = null;
+        });
+
+        updateCount();
+    });
+</script>
 {% endblock %}
