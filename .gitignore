@@ -1,8 +1,6 @@
 .env
 venv/
 
-config.py
-
 *.log
 *.sqlite
 *.db
