@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, send_file
 from . import app, db, login_manager, s3_client
 from .models import User, Track, Artist
 from flask_login import login_user, logout_user, login_required, current_user
@@ -8,6 +8,7 @@ from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
 import eyed3
 import os
 import tempfile
+import zipfile
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -132,7 +133,40 @@ def bulk_action():
     action = request.form.get('action')
 
     tracks = Track.query.filter(Track.id.in_(selected_tracks)).all()
+    if action == "Download":
+        zip_filename = tempfile.mktemp(suffix=".zip")
+        with zipfile.ZipFile(zip_filename, 'w') as zipf:
+            for track in tracks:
+                try:
+                    s3_file = s3_client.get_object(Bucket=app.config['AWS_BUCKET_NAME'], Key=track.s3_url)
+                    tmp_filename = tempfile.mktemp(suffix=".mp3")
 
+                    with open(tmp_filename, 'wb') as f:
+                        f.write(s3_file['Body'].read())
+                    
+                    audiofile = eyed3.load(tmp_filename)
+                    
+                    audiofile.initTag()
+                    audiofile.tag.title = track.title
+                    audiofile.tag.artist = track.artist.name
+                    audiofile.tag.album = track.album
+                    audiofile.tag.genre = track.genre
+                    
+                    audiofile.tag.save()
+                    
+                    zipf.write(tmp_filename, f" {track.artist.name} - {track.title} - {track.album}.mp3")
+                    
+                    os.remove(tmp_filename)
+                    
+                except (BotoCoreError, NoCredentialsError) as e:
+                    flash(f'Error downloading {track.s3_url} from S3: {str(e)}', 'danger')
+                    continue
+        
+        response = send_file(zip_filename, as_attachment=True, download_name=f'{current_user.username}-music-download.zip', mimetype='application/zip')
+        os.remove(zip_filename)
+
+        flash(f'{len(tracks)} tracks downloaded successfully!', 'success')
+        return response    
     if action == "Delete":
         for track in tracks:
             if track.user_id != current_user.id:

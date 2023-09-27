@@ -40,11 +40,16 @@
                 {% endfor %}
             </tbody>
         </table>
-        <div class="mb-3">
-            <p id="selectedCount">0 tracks selected</p>
-            <input type="submit" name="action" value="Edit" class="btn btn-secondary">
-            <input type="submit" name="action" value="Delete" class="btn btn-danger">
-            <button type="button" id="clearButton" class="btn btn-warning">Clear</button>
+        <p id="selectedCount">0 tracks selected</p>
+        <div class="mb-3 d-flex justify-content-between">
+            <div>
+                <input type="submit" name="action" value="Edit" class="btn btn-secondary">
+                <input type="submit" name="action" value="Download" class="btn btn-success">
+                <button type="button" id="clearButton" class="btn btn-warning">Clear</button>
+            </div>
+            <div>
+                <input type="submit" name="action" value="Delete" class="btn btn-danger">
+            </div>
         </div>
     </form>
 
