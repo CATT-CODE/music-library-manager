@@ -106,7 +106,7 @@ def upload():
                     db.session.flush()
 
                 if title != 'Unknown Title':
-                    existing_track = Track.query.filter_by(title=title, artist_id=artist.id).first()
+                    existing_track = Track.query.filter_by(title=title, artist_id=artist.id, user_id=current_user.id).first()
                     if existing_track:
                         continue
 
